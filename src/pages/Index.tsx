@@ -110,46 +110,46 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header avec logo, notifications et photo de profil */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 border-b sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+      <div className="bg-gradient-to-r from-green-500 to-green-600 border-b sticky top-0 z-40 safe-area-top">
+        <div className="w-full px-3 sm:px-4 py-2 sm:py-3">
+          <div className="flex items-center justify-between max-w-screen-sm mx-auto">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setSideMenuOpen(true)}
-                className="lg:hidden text-white hover:bg-white/20"
+                className="lg:hidden text-white hover:bg-white/20 h-8 w-8 sm:h-10 sm:w-10"
               >
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
                 <img 
                   src="/lovable-uploads/35ad5651-d83e-4704-9851-61f3ad9fb0c3.png" 
                   alt="PENDOR Logo" 
-                  className="w-8 h-8 rounded-full"
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0"
                 />
-                <h1 className="text-xl font-bold text-white">PENDOR</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-white truncate">PENDOR</h1>
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
               {user && <NotificationIcon />}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleProfileClick}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 h-8 w-8 sm:h-10 sm:w-10"
               >
                 {user ? (
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">
                       {user.email?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 ) : (
-                  <User className="h-6 w-6" />
+                  <User className="h-5 w-5 sm:h-6 sm:w-6" />
                 )}
               </Button>
             </div>
@@ -158,22 +158,22 @@ const Index = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white border-b">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <div className="bg-card border-b sticky top-12 sm:top-16 z-30">
+        <div className="w-full px-3 sm:px-4 py-2 sm:py-3">
+          <div className="relative max-w-screen-sm mx-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Rechercher des pronostics, sports, équipes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm sm:text-base h-9 sm:h-10"
             />
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 py-4 pb-20 space-y-4">
+      <div className="w-full px-2 sm:px-4 py-3 sm:py-4 pb-20 sm:pb-24 space-y-3 sm:space-y-4 max-w-screen-sm mx-auto">
         {initialLoading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
