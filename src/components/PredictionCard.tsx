@@ -19,6 +19,7 @@ import { useOptimizedPosts } from '@/hooks/useOptimizedPosts';
 import { usePostActions } from '@/hooks/usePostActions';
 import { supabase } from '@/integrations/supabase/client';
 import { usePostLikes } from '@/hooks/usePostLikes';
+import { usePostComments } from '@/hooks/usePostComments';
 import { CommentsBottomSheet } from '@/components/CommentsBottomSheet';
 
 interface PredictionCardProps {
@@ -62,6 +63,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
   const { requireAuth, user } = useAuth();
   const { likePost } = useOptimizedPosts();
   const { isLiked: isPostLiked, likesCount: postLikesCount, toggleLike } = usePostLikes(prediction.id);
+  const { commentsCount } = usePostComments(prediction.id);
   const { 
     followUser, 
     savePost, 
@@ -681,10 +683,10 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                 <span className="text-xs font-medium">0</span>
               </button>
             }>
-              <CommentsBottomSheet postId={prediction.id.toString()} commentsCount={0}>
+              <CommentsBottomSheet postId={prediction.id.toString()} commentsCount={commentsCount}>
                 <button className="flex items-center space-x-1 text-gray-600 hover:text-blue-500 transition-colors">
                   <MessageCircle className="w-4 h-4" />
-                  <span className="text-xs font-medium">0</span>
+                  <span className="text-xs font-medium">{commentsCount}</span>
                 </button>
               </CommentsBottomSheet>
             </ProtectedComponent>
