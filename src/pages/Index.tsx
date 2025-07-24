@@ -67,7 +67,7 @@ const Index = () => {
   const filteredPosts = posts.filter(post => {
     // Filtrer par recherche (contenu, équipes, sport, et nom d'utilisateur)
     const matchesSearch = searchQuery === '' || 
-      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.match_teams?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.sport?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,11 +76,16 @@ const Index = () => {
     if (!matchesSearch) return false;
 
     // Filtrer par sport
-    if (selectedSport && post.sport !== selectedSport) return false;
+    if (selectedSport && selectedSport !== '' && post.sport !== selectedSport) return false;
 
-    // Filtrer par cotes
-    if (minOdds && parseFloat(post.odds?.toString() || '0') < parseFloat(minOdds)) return false;
-    if (maxOdds && parseFloat(post.odds?.toString() || '0') > parseFloat(maxOdds)) return false;
+    // Filtrer par cotes - vérifier que les valeurs sont valides
+    const postOdds = parseFloat(post.odds?.toString() || '0');
+    if (minOdds && minOdds !== '' && !isNaN(parseFloat(minOdds))) {
+      if (postOdds < parseFloat(minOdds)) return false;
+    }
+    if (maxOdds && maxOdds !== '' && !isNaN(parseFloat(maxOdds))) {
+      if (postOdds > parseFloat(maxOdds)) return false;
+    }
 
     // Filtrer les posts masqués
     if (hiddenPostIds.includes(post.id)) return false;
