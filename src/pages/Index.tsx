@@ -76,7 +76,7 @@ const Index = () => {
     if (!matchesSearch) return false;
 
     // Filtrer par sport
-    if (selectedSport && selectedSport !== '' && post.sport !== selectedSport) return false;
+    if (selectedSport && selectedSport !== '' && selectedSport !== 'all' && post.sport !== selectedSport) return false;
 
     // Filtrer par cotes - vérifier que les valeurs sont valides
     const postOdds = parseFloat(post.odds?.toString() || '0');
@@ -221,7 +221,7 @@ const Index = () => {
                       <SelectValue placeholder="Tous les sports" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tous les sports</SelectItem>
+                      <SelectItem value="all">Tous les sports</SelectItem>
                       {uniqueSports.map(sport => (
                         <SelectItem key={sport} value={sport}>{sport}</SelectItem>
                       ))}
