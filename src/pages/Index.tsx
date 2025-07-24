@@ -101,6 +101,7 @@ const Index = () => {
     likes: post.likes || 0,
     comments: post.comments || 0,
     shares: post.shares || 0,
+    views: post.views || 0,
     successRate: 75, // Default value, should come from user stats
     timeAgo: new Date(post.created_at).toLocaleDateString('fr-FR'),
     sport: post.sport || 'Sport',

@@ -1,4 +1,4 @@
-import { Heart, Star, MoreVertical, Play, VolumeX, Volume2, Pause, Maximize, Minimize, Edit, Trash2, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { Heart, Star, MoreVertical, Play, VolumeX, Volume2, Pause, Maximize, Minimize, Edit, Trash2, MessageCircle, ArrowUpRight, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -39,6 +39,7 @@ interface PredictionCardProps {
     analysis: string;
     likes: number;
     shares: number;
+    views: number;
     successRate: number;
     timeAgo: string;
     sport: string;
@@ -705,6 +706,12 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                 <span className="text-xs font-medium">{prediction.shares}</span>
               </button>
             </ProtectedComponent>
+
+            {/* Vues */}
+            <button className="flex items-center space-x-1 text-gray-600">
+              <Eye className="w-4 h-4" />
+              <span className="text-xs font-medium">{prediction.views}</span>
+            </button>
           </div>
           
           <ProtectedComponent fallback={
