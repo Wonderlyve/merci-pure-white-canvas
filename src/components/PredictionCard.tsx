@@ -371,40 +371,40 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
   }
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow mx-1 sm:mx-0">
-      <CardContent className="p-3 sm:p-4">
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
         {/* User Info */}
-        <div className="flex items-center justify-between mb-2 sm:mb-3">
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
             <div 
-              className="relative cursor-pointer flex-shrink-0"
+              className="relative cursor-pointer"
               onClick={handleProfileClick}
             >
               <img
                 src={prediction.user.avatar}
                 alt={prediction.user.username}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
+                className="w-10 h-10 rounded-full"
               />
-              <div className={`absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-4 h-4 sm:w-5 sm:h-5 ${prediction.user.badgeColor} rounded-full flex items-center justify-center`}>
+              <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${prediction.user.badgeColor} rounded-full flex items-center justify-center`}>
                 <span className="text-white text-xs font-bold">
                   {prediction.user.badge === 'Confirmé' ? 'C' : prediction.user.badge === 'Pro' ? 'P' : 'N'}
                 </span>
               </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
+            <div>
+              <div className="flex items-center space-x-2">
                 <span 
-                  className="font-medium text-foreground cursor-pointer hover:underline text-sm sm:text-base truncate"
+                  className="font-medium text-gray-900 cursor-pointer hover:underline"
                   onClick={handleProfileClick}
                 >
                   {prediction.user.username}
                 </span>
-                <span className="text-xs text-muted-foreground flex-shrink-0">{prediction.timeAgo}</span>
+                <span className="text-xs text-gray-500">{prediction.timeAgo}</span>
               </div>
-              <div className="flex items-center space-x-1 sm:space-x-2 text-xs text-muted-foreground mt-0.5">
-                <span className="flex-shrink-0">{prediction.successRate}% de réussite</span>
-                <span className="flex-shrink-0">•</span>
-                <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-muted rounded-full text-xs flex-shrink-0">{prediction.sport}</span>
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <span>{prediction.successRate}% de réussite</span>
+                <span>•</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-full">{prediction.sport}</span>
               </div>
             </div>
           </div>
