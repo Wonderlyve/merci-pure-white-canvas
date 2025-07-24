@@ -43,7 +43,7 @@ const BottomNavigation = () => {
                 <div key={index} className="flex-1 flex justify-center">
                   <button
                     onClick={item.action}
-                    className={`w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center -mt-4 shadow-lg border-3 border-background transition-all duration-200 hover:scale-105 active:scale-95 ${
+                    className={`w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center -mt-6 shadow-lg border-4 border-white transition-all duration-200 hover:scale-105 active:scale-95 ${
                       !user ? 'opacity-50' : ''
                     }`}
                   >
