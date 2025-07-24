@@ -34,7 +34,7 @@ const BottomNavigation = () => {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-bottom">
         <div className="flex items-end">
           {navItems.map((item, index) => {
             const Icon = item.icon;
@@ -43,11 +43,11 @@ const BottomNavigation = () => {
                 <div key={index} className="flex-1 flex justify-center">
                   <button
                     onClick={item.action}
-                    className={`w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center -mt-6 shadow-lg border-4 border-white transition-all duration-200 hover:scale-105 active:scale-95 ${
+                    className={`w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center -mt-4 sm:-mt-6 shadow-lg border-3 sm:border-4 border-background transition-all duration-200 hover:scale-105 active:scale-95 ${
                       !user ? 'opacity-50' : ''
                     }`}
                   >
-                    <Icon className="w-5 h-5 text-white" />
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </button>
                 </div>
               );
@@ -56,13 +56,13 @@ const BottomNavigation = () => {
               <button
                 key={index}
                 onClick={item.action}
-                className={`flex-1 py-2 px-1 flex flex-col items-center justify-center space-y-1 transition-all duration-200 min-h-[4rem] active:bg-muted/50 ${
+                className={`flex-1 py-1.5 sm:py-2 px-1 flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 transition-all duration-200 min-h-[3.5rem] sm:min-h-[4rem] active:bg-muted/50 ${
                   item.active
-                    ? 'text-gray-600 bg-gray-100'
+                    ? 'text-primary bg-primary/10'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-xs font-medium leading-none">{item.label}</span>
               </button>
             );
