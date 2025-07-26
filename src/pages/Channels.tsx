@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -29,6 +30,7 @@ const Channels = () => {
     description: '',
     price: 0
   });
+  
 
   // Check user badge from profiles table
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -37,7 +39,7 @@ const Channels = () => {
       if (user) {
         const { data } = await supabase
           .from('profiles')
-          .select('badge')
+          .select('badge, username')
           .eq('user_id', user.id)
           .single();
         setUserProfile(data);
@@ -63,6 +65,20 @@ const Channels = () => {
     }
   };
 
+  const createFreeChannel = async () => {
+    const defaultChannelData = {
+      name: `Canal de ${userProfile?.username || user?.email?.split('@')[0] || 'Utilisateur'}`,
+      description: 'Canal gratuit ouvert à tous',
+      price: 0
+    };
+
+    const result = await createChannelHook(defaultChannelData);
+    if (result) {
+      setShowWarningDialog(false);
+      toast.success('Canal gratuit créé avec succès !');
+    }
+  };
+
   const joinChannel = async (channel: Channel) => {
     if (isSubscribed(channel.id)) {
       setSelectedChannel(channel);
@@ -70,6 +86,7 @@ const Channels = () => {
       await subscribeToChannel(channel.id);
     }
   };
+
 
   if (selectedChannel) {
     return (
@@ -204,9 +221,21 @@ const Channels = () => {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogAction onClick={() => setShowWarningDialog(false)}>
-                Compris
-              </AlertDialogAction>
+              <div className="flex space-x-2 w-full">
+                <Button 
+                  onClick={() => setShowWarningDialog(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Compris
+                </Button>
+                <Button 
+                  onClick={createFreeChannel}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                >
+                  Créer un canal gratuit
+                </Button>
+              </div>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
