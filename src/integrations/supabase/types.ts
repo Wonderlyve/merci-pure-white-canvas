@@ -474,6 +474,30 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_prono_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          prono_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          prono_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          prono_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vip_pronos: {
         Row: {
           channel_id: string
