@@ -59,6 +59,10 @@ export type Database = {
           media_filename: string | null
           media_type: string | null
           media_url: string | null
+          reply_to_content: string | null
+          reply_to_id: string | null
+          reply_to_media_type: string | null
+          reply_to_username: string | null
           user_id: string
         }
         Insert: {
@@ -69,6 +73,10 @@ export type Database = {
           media_filename?: string | null
           media_type?: string | null
           media_url?: string | null
+          reply_to_content?: string | null
+          reply_to_id?: string | null
+          reply_to_media_type?: string | null
+          reply_to_username?: string | null
           user_id: string
         }
         Update: {
@@ -79,6 +87,10 @@ export type Database = {
           media_filename?: string | null
           media_type?: string | null
           media_url?: string | null
+          reply_to_content?: string | null
+          reply_to_id?: string | null
+          reply_to_media_type?: string | null
+          reply_to_username?: string | null
           user_id?: string
         }
         Relationships: [
