@@ -137,15 +137,16 @@ const DebriefingModal = ({ isOpen, onClose, onSubmit }: DebriefingModalProps) =>
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center space-x-2">
             <Video className="w-5 h-5 text-primary" />
             <span>Créer un débriefing</span>
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-4 p-1">
           <div>
             <Label htmlFor="title">Titre du débriefing</Label>
             <input
@@ -288,7 +289,8 @@ const DebriefingModal = ({ isOpen, onClose, onSubmit }: DebriefingModalProps) =>
               Publier le débriefing
             </Button>
           </div>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
