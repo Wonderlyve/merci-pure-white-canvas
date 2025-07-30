@@ -241,6 +241,63 @@ export type Database = {
           },
         ]
       }
+      debriefing_likes: {
+        Row: {
+          created_at: string
+          debriefing_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          debriefing_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          debriefing_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      debriefings: {
+        Row: {
+          channel_id: string
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          likes: number
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          creator_id: string
+          description: string
+          id?: string
+          likes?: number
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          creator_id?: string
+          description?: string
+          id?: string
+          likes?: number
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string

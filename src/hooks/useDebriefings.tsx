@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { DebriefingData } from '@/components/channel-chat/DebriefingModal';
 
 export interface Debriefing {
@@ -16,46 +17,6 @@ export interface Debriefing {
   channel_id: string;
 }
 
-// Données de simulation
-const mockDebriefings: Debriefing[] = [
-  {
-    id: '1',
-    title: 'Analyse du match PSG vs Real Madrid',
-    description: 'Débriefing complet de la rencontre avec analyse tactique et moments clés.',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    creator_id: 'creator1',
-    creator_username: 'PronoExpert',
-    likes: 124,
-    isLiked: false,
-    created_at: '2024-01-28T10:30:00Z',
-    channel_id: 'channel1'
-  },
-  {
-    id: '2',
-    title: 'Bilan de la journée de Ligue 1',
-    description: 'Retour sur tous les matchs du week-end avec les surprises et performances.',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    creator_id: 'creator1',
-    creator_username: 'PronoExpert',
-    likes: 89,
-    isLiked: true,
-    created_at: '2024-01-27T15:45:00Z',
-    channel_id: 'channel1'
-  },
-  {
-    id: '3',
-    title: 'Prédictions Premier League',
-    description: 'Mes pronos pour la prochaine journée de Premier League avec explications détaillées.',
-    video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    creator_id: 'creator1',
-    creator_username: 'PronoExpert',
-    likes: 67,
-    isLiked: false,
-    created_at: '2024-01-26T09:15:00Z',
-    channel_id: 'channel1'
-  }
-];
-
 export const useDebriefings = (channelId: string) => {
   const { user } = useAuth();
   const [debriefings, setDebriefings] = useState<Debriefing[]>([]);
@@ -64,19 +25,47 @@ export const useDebriefings = (channelId: string) => {
   const fetchDebriefings = async () => {
     setLoading(true);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      // Filter debriefings by channel (for simulation)
-      const channelDebriefings = mockDebriefings.filter(d => d.channel_id === channelId);
-      
-      // Sort by creation date (newest first)
-      const sortedDebriefings = channelDebriefings.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    try {
+      const { data, error } = await supabase
+        .from('debriefings')
+        .select('*')
+        .eq('channel_id', channelId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const debriefingsWithUserInfo = await Promise.all(
+        (data || []).map(async (debriefing) => {
+          // Get creator username
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('user_id', debriefing.creator_id)
+            .single();
+
+          // Check if user has liked this debriefing
+          const { data: likeData } = await supabase
+            .from('debriefing_likes')
+            .select('id')
+            .eq('debriefing_id', debriefing.id)
+            .eq('user_id', user?.id)
+            .maybeSingle();
+
+          return {
+            ...debriefing,
+            creator_username: profileData?.username || 'Utilisateur',
+            isLiked: !!likeData
+          };
+        })
       );
-      
-      setDebriefings(sortedDebriefings);
+
+      setDebriefings(debriefingsWithUserInfo);
+    } catch (error) {
+      console.error('Error fetching debriefings:', error);
+      toast.error('Erreur lors du chargement des débriefings');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const createDebriefing = async (debriefingData: DebriefingData & { channelId: string }) => {
@@ -86,25 +75,52 @@ export const useDebriefings = (channelId: string) => {
     }
 
     try {
-      // Simulate video upload and processing
-      let videoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+      let videoUrl = '';
       
       if (debriefingData.video) {
-        // In a real app, this would upload the video to storage
-        videoUrl = URL.createObjectURL(debriefingData.video);
+        // Upload video to storage
+        const videoFileName = `${user.id}/${Date.now()}-${debriefingData.video.name}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('debriefing-videos')
+          .upload(videoFileName, debriefingData.video);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('debriefing-videos')
+          .getPublicUrl(videoFileName);
+        
+        videoUrl = urlData.publicUrl;
       }
 
+      // Create debriefing in database
+      const { data, error } = await supabase
+        .from('debriefings')
+        .insert({
+          title: debriefingData.title,
+          description: debriefingData.description,
+          video_url: videoUrl,
+          creator_id: user.id,
+          channel_id: debriefingData.channelId
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Get creator username
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('user_id', user.id)
+        .single();
+
       const newDebriefing: Debriefing = {
-        id: Date.now().toString(),
-        title: debriefingData.title,
-        description: debriefingData.description,
-        video_url: videoUrl,
-        creator_id: user.id,
-        creator_username: 'Vous', // In real app, get from profile
-        likes: 0,
-        isLiked: false,
-        created_at: new Date().toISOString(),
-        channel_id: debriefingData.channelId
+        ...data,
+        creator_username: profileData?.username || 'Vous',
+        isLiked: false
       };
 
       // Add to the beginning of the list (newest first)
@@ -126,15 +142,40 @@ export const useDebriefings = (channelId: string) => {
     }
 
     try {
-      setDebriefings(prev => prev.map(debriefing => {
-        if (debriefing.id === debriefingId) {
+      const debriefing = debriefings.find(d => d.id === debriefingId);
+      if (!debriefing) return false;
+
+      if (debriefing.isLiked) {
+        // Remove like
+        const { error } = await supabase
+          .from('debriefing_likes')
+          .delete()
+          .eq('debriefing_id', debriefingId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Add like
+        const { error } = await supabase
+          .from('debriefing_likes')
+          .insert({
+            debriefing_id: debriefingId,
+            user_id: user.id
+          });
+
+        if (error) throw error;
+      }
+
+      // Update local state
+      setDebriefings(prev => prev.map(d => {
+        if (d.id === debriefingId) {
           return {
-            ...debriefing,
-            isLiked: !debriefing.isLiked,
-            likes: debriefing.isLiked ? debriefing.likes - 1 : debriefing.likes + 1
+            ...d,
+            isLiked: !d.isLiked,
+            likes: d.isLiked ? d.likes - 1 : d.likes + 1
           };
         }
-        return debriefing;
+        return d;
       }));
       
       return true;
@@ -152,7 +193,18 @@ export const useDebriefings = (channelId: string) => {
     }
 
     try {
+      // Delete from database
+      const { error } = await supabase
+        .from('debriefings')
+        .delete()
+        .eq('id', debriefingId)
+        .eq('creator_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
       setDebriefings(prev => prev.filter(d => d.id !== debriefingId));
+      toast.success('Débriefing supprimé avec succès');
       return true;
     } catch (error) {
       console.error('Error deleting debriefing:', error);
