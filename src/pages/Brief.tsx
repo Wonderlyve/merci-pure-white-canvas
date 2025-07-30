@@ -6,11 +6,12 @@ import { Card } from '@/components/ui/card';
 import BottomNavigation from '@/components/BottomNavigation';
 import DebriefingModal from '@/components/channel-chat/DebriefingModal';
 import { useDebriefings } from '@/hooks/useDebriefings';
+import { toast } from 'sonner';
 
 const Brief = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { debriefings, createDebriefing } = useDebriefings('general');
+  const { debriefings, createDebriefing } = useDebriefings(null);
   
   // Mock data supplémentaires pour la demo
   const mockBriefs = [
@@ -69,14 +70,9 @@ const Brief = () => {
   };
 
   const handleCreateBrief = async (briefData: any) => {
-    const success = await createDebriefing({
-      ...briefData,
-      channelId: 'general'
-    });
-    
-    if (success) {
-      setShowCreateModal(false);
-    }
+    // Créer des débriefings nécessite un canal spécifique
+    toast.error('Veuillez vous rendre dans un canal pour créer un débriefing');
+    setShowCreateModal(false);
   };
 
   const formatViews = (views: number) => {

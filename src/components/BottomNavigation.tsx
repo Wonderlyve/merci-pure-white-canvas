@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import CreatePredictionModal from './CreatePredictionModal';
 import DebriefingModal from './channel-chat/DebriefingModal';
 import { useDebriefings } from '@/hooks/useDebriefings';
+import { toast } from 'sonner';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const BottomNavigation = () => {
   const { user, requireAuth } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBriefModal, setShowBriefModal] = useState(false);
-  const { createDebriefing } = useDebriefings('general');
+  const { createDebriefing } = useDebriefings(null);
   
   const handleCreateClick = () => {
     if (requireAuth()) {
@@ -26,14 +27,9 @@ const BottomNavigation = () => {
   };
 
   const handleCreateBrief = async (briefData: any) => {
-    const success = await createDebriefing({
-      ...briefData,
-      channelId: 'general'
-    });
-    
-    if (success) {
-      setShowBriefModal(false);
-    }
+    // Créer des débriefings nécessite un canal spécifique
+    toast.error('Veuillez vous rendre dans un canal pour créer un débriefing');
+    setShowBriefModal(false);
   };
 
   const handleProfileClick = () => {

@@ -17,7 +17,7 @@ export interface Debriefing {
   channel_id: string;
 }
 
-export const useDebriefings = (channelId: string) => {
+export const useDebriefings = (channelId: string | null) => {
   const { user } = useAuth();
   const [debriefings, setDebriefings] = useState<Debriefing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +26,13 @@ export const useDebriefings = (channelId: string) => {
     setLoading(true);
     
     try {
+      if (!channelId || channelId === 'general') {
+        // Pour les débriefings généraux ou quand pas de channel spécifique
+        setDebriefings([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('debriefings')
         .select('*')
@@ -68,9 +75,14 @@ export const useDebriefings = (channelId: string) => {
     }
   };
 
-  const createDebriefing = async (debriefingData: DebriefingData & { channelId: string }) => {
+  const createDebriefing = async (debriefingData: DebriefingData & { channelId?: string }) => {
     if (!user) {
       toast.error('Vous devez être connecté pour créer un débriefing');
+      return false;
+    }
+
+    if (!channelId || channelId === 'general') {
+      toast.error('Sélectionnez un canal valide pour créer un débriefing');
       return false;
     }
 
@@ -103,7 +115,7 @@ export const useDebriefings = (channelId: string) => {
           description: debriefingData.description,
           video_url: videoUrl,
           creator_id: user.id,
-          channel_id: debriefingData.channelId
+          channel_id: channelId
         })
         .select()
         .single();
@@ -214,7 +226,12 @@ export const useDebriefings = (channelId: string) => {
   };
 
   useEffect(() => {
-    fetchDebriefings();
+    if (channelId && channelId !== 'general') {
+      fetchDebriefings();
+    } else {
+      setDebriefings([]);
+      setLoading(false);
+    }
   }, [channelId]);
 
   return {
