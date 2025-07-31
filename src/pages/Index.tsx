@@ -8,7 +8,7 @@ import PredictionCard from '@/components/PredictionCard';
 import BottomNavigation from '@/components/BottomNavigation';
 import SideMenu from '@/components/SideMenu';
 import NotificationIcon from '@/components/NotificationIcon';
-import { examplePosts } from '@/data/examples';
+import { useOptimizedPosts } from '@/hooks/useOptimizedPosts';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import PostSkeleton from '@/optimization/PostSkeleton';
@@ -23,10 +23,7 @@ const Index = () => {
   const [minOdds, setMinOdds] = useState<string>('');
   const [maxOdds, setMaxOdds] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
-  // Use example posts instead of real posts
-  const posts = examplePosts;
-  const loading = false;
-  const initialLoading = false;
+  const { posts, loading, initialLoading } = useOptimizedPosts();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -68,11 +65,13 @@ const Index = () => {
   };
 
   const filteredPosts = posts.filter(post => {
-    // Filtrer par recherche (contenu, sport, et nom d'utilisateur)
+    // Filtrer par recherche (contenu, équipes, sport, et nom d'utilisateur)
     const matchesSearch = searchQuery === '' || 
       post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.match_teams?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.sport?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.user.username?.toLowerCase().includes(searchQuery.toLowerCase());
+      post.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.username?.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (!matchesSearch) return false;
 
@@ -90,6 +89,9 @@ const Index = () => {
 
     // Filtrer les posts masqués
     if (hiddenPostIds.includes(post.id)) return false;
+
+    // Filtrer les posts d'utilisateurs bloqués
+    if (blockedUserIds.includes(post.user_id)) return false;
 
     return true;
   });
@@ -116,26 +118,26 @@ const Index = () => {
   const transformPostToPrediction = (post: any) => ({
     id: post.id,
     user: {
-      username: post.user.username,
-      avatar: post.user.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + post.user.username,
+      username: post.display_name || post.username || 'Utilisateur',
+      avatar: post.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + post.user_id,
       badge: 'Nouveau',
       badgeColor: 'bg-gray-500'
     },
-    match: post.content.split(' - ')[0] || 'Match non spécifié',
-    prediction: post.content.split(' - ')[1] || post.content,
+    match: post.match_teams || 'Match non spécifié',
+    prediction: post.prediction_text || 'Pronostic non spécifié',
     odds: post.odds?.toString() || '1.00',
     confidence: post.confidence || 0,
-    analysis: post.content,
-    likes: post.likes_count || 0,
-    comments: post.comments_count || 0,
-    shares: 0,
-    views: post.views_count || 0,
-    successRate: 75,
+    analysis: post.analysis || post.content || '',
+    likes: post.likes || 0,
+    comments: post.comments || 0,
+    shares: post.shares || 0,
+    views: post.views || 0,
+    successRate: 75, // Default value, should come from user stats
     timeAgo: new Date(post.created_at).toLocaleDateString('fr-FR'),
     sport: post.sport || 'Sport',
     image: post.image_url,
-    video: undefined,
-    is_liked: false
+    video: post.video_url,
+    is_liked: post.is_liked || false
   });
 
   return (
