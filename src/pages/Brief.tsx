@@ -183,32 +183,32 @@ const Brief = () => {
                       </div>
                       </div>
                     
-                    {/* Menu options pour l'auteur */}
-                    {user?.id === brief.creator_id && (
-                      <div className="absolute top-2 right-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 bg-black/60 text-white hover:bg-black/80"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => handleDeleteBrief(brief.id, e)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    )}
+                     {/* Menu options pour l'auteur */}
+                     {user?.id === brief.creator_id && (
+                       <div className="absolute top-2 right-2 z-20">
+                         <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-8 w-8 bg-black/80 text-white hover:bg-black/90 shadow-lg"
+                               onClick={(e) => e.stopPropagation()}
+                             >
+                               <MoreVertical className="w-4 h-4" />
+                             </Button>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end" className="z-50">
+                             <DropdownMenuItem
+                               onClick={(e) => handleDeleteBrief(brief.id, e)}
+                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                             >
+                               <Trash2 className="w-4 h-4 mr-2" />
+                               Supprimer
+                             </DropdownMenuItem>
+                           </DropdownMenuContent>
+                         </DropdownMenu>
+                       </div>
+                     )}
                     
                      {/* Stats overlay */}
                     <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs flex items-center space-x-3">
