@@ -1,10 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Play, Pause, Share2, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Play, Pause, Share2, MoreVertical, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import DebriefingCommentsSheet from '@/components/DebriefingCommentsSheet';
 import { useDebriefings } from '@/hooks/useDebriefings';
 import { useDebriefingViews } from '@/hooks/useDebriefingViews';
@@ -17,7 +23,7 @@ const BriefPlayer = () => {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAuth();
-  const { debriefings, likeDebriefing, fetchPublicDebriefings } = useDebriefings(null);
+  const { debriefings, likeDebriefing, fetchPublicDebriefings, deleteDebriefing } = useDebriefings(null);
   const { addView } = useDebriefingViews();
 
   useEffect(() => {
@@ -104,6 +110,25 @@ const BriefPlayer = () => {
     await likeDebriefing(briefData.id);
   };
 
+  const handleDeleteBrief = async () => {
+    if (!briefData) return;
+    
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce brief ?')) {
+      const success = await deleteDebriefing(briefData.id);
+      if (success) {
+        toast.success('Brief supprimé avec succès');
+        navigate('/brief');
+      } else {
+        toast.error('Erreur lors de la suppression');
+      }
+    }
+  };
+
+  const handleEditBrief = () => {
+    // À implémenter - rediriger vers une page d'édition ou ouvrir un modal
+    toast.info('Fonctionnalité d\'édition à venir');
+  };
+
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -144,13 +169,44 @@ const BriefPlayer = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:bg-white/20"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </Button>
+          {/* Menu options pour l'auteur */}
+          {user?.id === briefData.creator_id ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/20"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="z-50">
+                <DropdownMenuItem
+                  onClick={handleEditBrief}
+                  className="flex items-center"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleDeleteBrief}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Supprimer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          )}
         </div>
       </div>
 
