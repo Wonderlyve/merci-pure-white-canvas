@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, Smile } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,7 +7,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import DebriefingCommentItem from './DebriefingCommentItem';
 import { useDebriefingComments } from '@/hooks/useDebriefingComments';
 import { useAuth } from '@/hooks/useAuth';
-import { EmojiPicker } from '@/components/channel-chat/EmojiPicker';
 import { toast } from 'sonner';
 
 interface DebriefingCommentsSheetProps {
@@ -28,7 +27,6 @@ const DebriefingCommentsSheet: React.FC<DebriefingCommentsSheetProps> = ({
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; username: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleSubmitComment = async () => {
     if (!newComment.trim() || !user) return;
@@ -72,11 +70,6 @@ const DebriefingCommentsSheet: React.FC<DebriefingCommentsSheetProps> = ({
     }
   };
 
-  const handleEmojiSelect = (emoji: string) => {
-    setNewComment(prev => prev + emoji);
-    setShowEmojiPicker(false);
-  };
-
   const totalComments = comments.reduce((total, comment) => {
     return total + 1 + (comment.replies?.length || 0);
   }, 0);
@@ -84,7 +77,7 @@ const DebriefingCommentsSheet: React.FC<DebriefingCommentsSheetProps> = ({
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="bottom" className="h-[80vh] max-h-[600px] p-0 flex flex-col">
-        <SheetHeader className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+        <SheetHeader className="p-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <SheetTitle>{title} ({totalComments})</SheetTitle>
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -93,37 +86,41 @@ const DebriefingCommentsSheet: React.FC<DebriefingCommentsSheetProps> = ({
           </div>
         </SheetHeader>
         
-        {/* Comments list - scrollable */}
-        <ScrollArea className="flex-1 p-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Chargement des commentaires...</div>
+        {/* Comments list - scrollable area */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-gray-500">Chargement des commentaires...</div>
+                </div>
+              ) : comments.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-gray-500">Aucun commentaire pour le moment</div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {comments.map((comment) => (
+                    <DebriefingCommentItem
+                      key={comment.id}
+                      comment={comment}
+                      onReply={handleReply}
+                      onLike={handleLike}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : comments.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Aucun commentaire pour le moment</div>
-            </div>
-          ) : (
-            <div className="space-y-4 pb-4">
-              {comments.map((comment) => (
-                <DebriefingCommentItem
-                  key={comment.id}
-                  comment={comment}
-                  onReply={handleReply}
-                  onLike={handleLike}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
+        </div>
         
         {/* Comment input - fixed at bottom */}
         {user && (
-          <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mt-auto">
+          <div className="border-t p-4 bg-white flex-shrink-0">
             {replyTo && (
-              <div className="flex items-center justify-between mb-2 p-2 bg-muted/50 rounded">
-                <span className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between mb-2 p-2 bg-gray-50 rounded">
+                <span className="text-sm text-gray-600">
                   En réponse à {replyTo.username}
                 </span>
                 <Button
@@ -139,52 +136,34 @@ const DebriefingCommentsSheet: React.FC<DebriefingCommentsSheetProps> = ({
               </div>
             )}
             
-            <div className="flex items-end space-x-2">
-              <div className="flex-1 relative">
-                <Textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder={replyTo ? `Répondre à ${replyTo.username}...` : "Ajouter un commentaire..."}
-                  className="min-h-[40px] max-h-[100px] resize-none pr-10"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmitComment();
-                    }
-                  }}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="absolute right-2 bottom-2 h-6 w-6 p-0 rounded-full hover:bg-muted"
-                >
-                  <Smile className="w-4 h-4 text-muted-foreground" />
-                </Button>
-              </div>
+            <div className="flex space-x-2">
+              <Textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder={replyTo ? `Répondre à ${replyTo.username}...` : "Ajouter un commentaire..."}
+                className="flex-1 min-h-[40px] max-h-[100px] resize-none border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitComment();
+                  }
+                }}
+              />
               <Button
                 onClick={handleSubmitComment}
                 disabled={!newComment.trim() || isSubmitting}
                 size="icon"
-                className="flex-shrink-0"
+                className="flex-shrink-0 bg-blue-600 hover:bg-blue-700"
               >
                 <Send className="w-4 h-4" />
               </Button>
             </div>
-            
-            {/* Emoji picker */}
-            <EmojiPicker
-              isOpen={showEmojiPicker}
-              onClose={() => setShowEmojiPicker(false)}
-              onEmojiSelect={handleEmojiSelect}
-              trigger={<div />}
-            />
           </div>
         )}
         
         {!user && (
-          <div className="border-t p-4 text-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mt-auto">
-            <span className="text-muted-foreground">Connectez-vous pour commenter</span>
+          <div className="border-t p-4 text-center bg-white flex-shrink-0">
+            <span className="text-gray-500">Connectez-vous pour commenter</span>
           </div>
         )}
       </SheetContent>
