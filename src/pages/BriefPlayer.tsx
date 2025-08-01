@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import DebriefingCommentsSheet from '@/components/DebriefingCommentsSheet';
 import { useDebriefings } from '@/hooks/useDebriefings';
 import { useDebriefingViews } from '@/hooks/useDebriefingViews';
-import { useDebriefingComments } from '@/hooks/useDebriefingComments';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -32,17 +31,6 @@ const BriefPlayer = () => {
 
   // Trouver le débriefing actuel
   const briefData = debriefings.find(d => d.id === id);
-  
-  // Récupérer les commentaires pour ce débriefing
-  const { comments } = useDebriefingComments(briefData?.id);
-  
-  // Calculer le nombre total de commentaires (incluant les réponses)
-  const totalComments = comments.reduce((total, comment) => {
-    return total + 1 + (comment.replies?.length || 0);
-  }, 0);
-  
-  // Récupérer le dernier commentaire
-  const lastComment = comments[comments.length - 1];
 
   // Ajouter une vue quand on commence à regarder la vidéo
   useEffect(() => {
@@ -58,27 +46,46 @@ const BriefPlayer = () => {
     }
   }, [briefData, navigate, debriefings.length]);
 
-  // Video controls
+  // Video controls and autoplay
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     const handleLoadedMetadata = () => {
       setDuration(video.duration);
+      // Auto-play the video when metadata is loaded
+      video.play().then(() => {
+        setIsPlaying(true);
+      }).catch((error) => {
+        console.log('Autoplay failed:', error);
+        // Autoplay failed, user will need to click play
+      });
     };
 
     const handleTimeUpdate = () => {
       setCurrentTime(video.currentTime);
     };
 
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
 
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
     };
-  }, []);
+  }, [briefData]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -159,20 +166,18 @@ const BriefPlayer = () => {
           />
           
           {/* Play/Pause Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={togglePlay}
-              className="w-20 h-20 bg-black/30 hover:bg-black/50 text-white rounded-full opacity-0 hover:opacity-100 transition-opacity"
-            >
-              {isPlaying ? (
-                <Pause className="w-10 h-10" />
-              ) : (
+          {!isPlaying && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={togglePlay}
+                className="w-20 h-20 bg-black/30 hover:bg-black/50 text-white rounded-full opacity-0 hover:opacity-100 transition-opacity"
+              >
                 <Play className="w-10 h-10 ml-1" />
-              )}
-            </Button>
-          </div>
+              </Button>
+            </div>
+          )}
 
           {/* Video Controls */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
@@ -261,7 +266,7 @@ const BriefPlayer = () => {
           {/* Comments Preview */}
           <div className="border-t border-gray-200 pt-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-gray-900">Commentaires {totalComments}</span>
+              <span className="font-medium text-gray-900">Commentaires {briefData.comments || 0}</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -272,43 +277,19 @@ const BriefPlayer = () => {
               </Button>
             </div>
             
-            {lastComment ? (
-              <div 
-                className="flex items-start space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2"
-                onClick={() => setShowComments(true)}
-              >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-medium text-xs">
-                    {(lastComment.user_username || 'A').charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="font-medium text-sm text-gray-900">{lastComment.user_username || 'Anonyme'}</span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(lastComment.created_at).toLocaleDateString('fr-FR')}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 line-clamp-2">
-                    {lastComment.content}
-                  </p>
-                </div>
+            <div 
+              className="flex items-start space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2"
+              onClick={() => setShowComments(true)}
+            >
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-gray-500" />
               </div>
-            ) : (
-              <div 
-                className="flex items-start space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2"
-                onClick={() => setShowComments(true)}
-              >
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4 text-gray-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-500">
-                    Soyez le premier à commenter
-                  </p>
-                </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-500">
+                  {briefData.comments > 0 ? 'Voir les commentaires' : 'Soyez le premier à commenter'}
+                </p>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -337,7 +318,7 @@ const BriefPlayer = () => {
         isOpen={showComments}
         onClose={() => setShowComments(false)}
         debriefingId={briefData.id}
-        title={`${totalComments} commentaires`}
+        title={`${briefData.comments || 0} commentaires`}
       />
     </div>
   );
