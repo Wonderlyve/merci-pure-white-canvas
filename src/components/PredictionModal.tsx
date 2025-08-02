@@ -75,46 +75,53 @@ const PredictionModal = ({ prediction }: PredictionModalProps) => {
           </div>
         )}
 
-        {/* Liste des matchs avec affichage simplifié */}
+        {/* Liste des matchs avec nouveau design */}
         <div className="space-y-3">
           {matches.map((match, index) => (
-            <div key={match.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              {/* En-tête du match */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-medium text-gray-600">
-                  {isMultipleBet ? `Match ${index + 1}` : 'Match'}
-                </div>
-                <div className="flex items-center space-x-2 text-xs text-gray-500">
-                  <Trophy className="w-3 h-3" />
-                  <span>{match.league}</span>
-                  <Clock className="w-3 h-3 ml-2" />
-                  <span>{match.time}</span>
-                </div>
-              </div>
-
-              {/* Équipes */}
-              <div className="mb-3">
-                <div className="font-semibold text-gray-900 text-base">
-                  {match.teams}
-                </div>
-              </div>
-
-              {/* Pronostic et type de pari */}
-              <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center space-x-3">
-                  <div className="text-sm text-gray-600">Type de pari:</div>
-                  <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-medium">
-                    {match.betType || '1X2'}
+            <div key={match.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              {/* Header avec ligue et heure */}
+              <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Trophy className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">{match.league}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">{match.time}</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="text-sm text-gray-600">Pronostic:</div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-green-100 text-green-800 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold">{match.prediction}</span>
+              </div>
+
+              {/* Contenu principal du match */}
+              <div className="p-4">
+                {/* Équipes avec design centré */}
+                <div className="text-center mb-4">
+                  <div className="font-bold text-lg text-gray-900 mb-2">
+                    {match.teams}
+                  </div>
+                </div>
+
+                {/* Section pronostic avec design en ligne */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-sm text-gray-600">Pari:</div>
+                      <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                        {match.betType || '1X2'}
+                      </div>
                     </div>
-                    <div className="text-sm font-medium text-gray-700">
-                      Cote: {match.odds}
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600">Pronostic:</span>
+                        <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">
+                          <span className="text-sm font-bold">{match.prediction}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">Cote</div>
+                        <div className="text-lg font-bold text-green-600">{match.odds}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
