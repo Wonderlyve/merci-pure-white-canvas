@@ -75,59 +75,60 @@ const PredictionModal = ({ prediction }: PredictionModalProps) => {
           </div>
         )}
 
-        {/* Liste des matchs avec nouveau design */}
-        <div className="space-y-3">
-          {matches.map((match, index) => (
-            <div key={match.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              {/* Header avec ligue et heure */}
-              <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Trophy className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">{match.league}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">{match.time}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contenu principal du match */}
-              <div className="p-4">
-                {/* Équipes avec design centré */}
-                <div className="text-center mb-4">
-                  <div className="font-bold text-lg text-gray-900 mb-2">
-                    {match.teams}
-                  </div>
-                </div>
-
-                {/* Section pronostic avec design en ligne */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-sm text-gray-600">Pari:</div>
-                      <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                        {match.betType || '1X2'}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-600">Pronostic:</span>
-                        <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">
-                          <span className="text-sm font-bold">{match.prediction}</span>
+        {/* Tableau des matchs */}
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full align-middle">
+            <div className="overflow-hidden border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Match
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type de pari
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pronostic
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cote
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {matches.map((match, index) => (
+                    <tr key={match.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="font-medium text-gray-900">{match.teams}</div>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Trophy className="w-3 h-3 mr-1" />
+                            <span>{match.league}</span>
+                            <Clock className="w-3 h-3 ml-2 mr-1" />
+                            <span>{match.time}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-600">Cote</div>
-                        <div className="text-lg font-bold text-green-600">{match.odds}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          {match.betType || '1X2'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                          {match.prediction}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-lg font-bold text-green-600">{match.odds}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Code de réservation - toujours affiché s'il existe */}
