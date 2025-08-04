@@ -1,6 +1,7 @@
 
 import { Calendar, Clock, Trophy } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card } from '@/components/ui/card';
 
 interface PredictionModalProps {
   prediction: {
@@ -34,9 +35,14 @@ interface PredictionModalProps {
 }
 
 const PredictionModal = ({ prediction }: PredictionModalProps) => {
-  // Si c'est un pari multiple, afficher tous les matchs
-  const matches = prediction.matches || [
-    {
+  // Traiter chaque match individuellement - créer un tableau où chaque match est un élément séparé
+  const matches = prediction.matches ? 
+    prediction.matches.map((match, index) => ({
+      ...match,
+      id: match.id || `match-${index}`,
+      betType: match.betType || prediction.betType
+    })) :
+    [{
       id: "1",
       teams: prediction.match,
       prediction: prediction.prediction,
@@ -44,8 +50,7 @@ const PredictionModal = ({ prediction }: PredictionModalProps) => {
       league: prediction.sport,
       time: '20:00',
       betType: prediction.betType
-    }
-  ];
+    }];
 
   const isMultipleBet = prediction.betType === 'combine' || matches.length > 1;
 
@@ -67,69 +72,60 @@ const PredictionModal = ({ prediction }: PredictionModalProps) => {
           </div>
         </div>
 
-        {/* Titre avec icône pour les paris combinés */}
-        {isMultipleBet && (
-          <div className="flex items-center space-x-2 mb-3">
-            <Trophy className="w-5 h-5 text-blue-600" />
-            <span className="font-semibold text-gray-800">Match sélectionné</span>
-          </div>
-        )}
+        {/* Titre Match sélectionné */}
+        <div className="mb-3">
+          <span className="text-sm font-medium text-gray-700">Match sélectionné</span>
+        </div>
 
-        {/* Tableau des matchs */}
-        <div className="overflow-x-auto">
-          <div className="inline-block min-w-full align-middle">
-            <div className="overflow-hidden border border-gray-200 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Match
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type de pari
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Pronostic
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cote
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {matches.map((match, index) => (
-                    <tr key={match.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="font-medium text-gray-900">{match.teams}</div>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Trophy className="w-3 h-3 mr-1" />
-                            <span>{match.league}</span>
-                            <Clock className="w-3 h-3 ml-2 mr-1" />
-                            <span>{match.time}</span>
-                          </div>
+        {/* Liste des matchs sélectionnés */}
+        {matches.length > 0 && (
+          <div className="space-y-2">
+            <h5 className="text-sm font-medium text-gray-700">Matchs sélectionnés ({matches.length}):</h5>
+            <div className="space-y-2">
+              {matches.map((match) => (
+                <Card key={match.id} className="p-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{match.teams}</div>
+                        <div className="text-xs text-gray-500">
+                          {match.league} • {match.time}
                         </div>
-                      </td>
-                      <td className="px-4 py-4">
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex space-x-2">
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                           {match.betType || '1X2'}
                         </span>
-                      </td>
-                      <td className="px-4 py-4">
                         <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
                           {match.prediction}
                         </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-lg font-bold text-green-600">{match.odds}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                      <span className="text-sm font-bold text-green-600">{match.odds}</span>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
-        </div>
+        )}
+        
+        {/* Total des côtes pour pari combiné */}
+        {prediction.totalOdds && isMultipleBet && (
+          <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 p-3 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">🎯</span>
+                <span className="font-semibold text-orange-800 text-sm">Côte totale combinée</span>
+              </div>
+              <span className="text-lg font-bold text-orange-600">
+                {prediction.totalOdds}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Code de réservation - toujours affiché s'il existe */}
         {prediction.reservationCode && (
@@ -141,22 +137,6 @@ const PredictionModal = ({ prediction }: PredictionModalProps) => {
           </div>
         )}
 
-        {/* Cote totale si pari multiple */}
-        {prediction.totalOdds && isMultipleBet && (
-          <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-semibold text-orange-800 text-sm">🎯 Pari Combiné</span>
-                <div className="text-xs text-orange-600 mt-1">{matches.length} matchs sélectionnés</div>
-              </div>
-              <div className="text-right">
-                <span className="text-lg font-bold text-orange-600">
-                  Cote: {prediction.totalOdds}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Analyse */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
