@@ -541,6 +541,7 @@ export type Database = {
           match_teams: string | null
           odds: number | null
           prediction_text: string | null
+          reservation_code: string | null
           shares: number | null
           sport: string | null
           updated_at: string
@@ -562,6 +563,7 @@ export type Database = {
           match_teams?: string | null
           odds?: number | null
           prediction_text?: string | null
+          reservation_code?: string | null
           shares?: number | null
           sport?: string | null
           updated_at?: string
@@ -583,6 +585,7 @@ export type Database = {
           match_teams?: string | null
           odds?: number | null
           prediction_text?: string | null
+          reservation_code?: string | null
           shares?: number | null
           sport?: string | null
           updated_at?: string
