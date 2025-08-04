@@ -148,6 +148,8 @@ const Index = () => {
     sport: post.sport || 'Sport',
     image: post.image_url,
     video: post.video_url,
+    reservationCode: post.reservation_code,
+    betType: post.bet_type,
     is_liked: post.is_liked || false
     };
   };
