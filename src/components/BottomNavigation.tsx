@@ -79,7 +79,7 @@ const BottomNavigation = () => {
     { icon: Crown, label: 'Canaux', active: false, action: () => navigate('/channels') },
     { icon: Plus, label: '', active: false, action: handleCreateClick, isCenter: true },
     { icon: Video, label: 'Brief', active: false, action: () => navigate('/brief') },
-    { icon: User, label: user ? 'Profil' : 'Connexion', active: false, action: handleProfileClick },
+    { icon: User, label: 'Story', active: false, action: () => navigate('/story') },
   ];
 
   return (
