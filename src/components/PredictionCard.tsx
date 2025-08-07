@@ -118,6 +118,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
   const [actionStatesLoaded, setActionStatesLoaded] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showFullText, setShowFullText] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideControlsTimeout = useRef<NodeJS.Timeout>();
 
@@ -538,15 +539,28 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
         {/* Match Info or News Title */}
         <div className="mb-3">
           <div className="font-semibold text-lg text-gray-900 mb-2">
-            {prediction.match.length > 45 ? (
+            {prediction.match.length > 45 && !showFullText ? (
               <>
                 {prediction.match.substring(0, 45)}...{" "}
-                <span className="text-green-600 font-medium cursor-pointer hover:underline">
+                <span 
+                  className="text-green-600 font-medium cursor-pointer hover:underline"
+                  onClick={() => setShowFullText(true)}
+                >
                   voir plus
                 </span>
               </>
             ) : (
-              prediction.match
+              <>
+                {prediction.match}
+                {prediction.match.length > 45 && showFullText && (
+                  <span 
+                    className="text-green-600 font-medium cursor-pointer hover:underline ml-2"
+                    onClick={() => setShowFullText(false)}
+                  >
+                    voir moins
+                  </span>
+                )}
+              </>
             )}
           </div>
           
@@ -716,15 +730,28 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
         {/* Analysis */}
         <div className="mb-4">
           <p className="text-gray-700 text-sm leading-relaxed">
-            {prediction.analysis.length > 45 ? (
+            {prediction.analysis.length > 45 && !showFullText ? (
               <>
                 {prediction.analysis.substring(0, 45)}...{" "}
-                <span className="text-green-600 font-medium cursor-pointer hover:underline">
+                <span 
+                  className="text-green-600 font-medium cursor-pointer hover:underline"
+                  onClick={() => setShowFullText(true)}
+                >
                   voir plus
                 </span>
               </>
             ) : (
-              prediction.analysis
+              <>
+                {prediction.analysis}
+                {prediction.analysis.length > 45 && showFullText && (
+                  <span 
+                    className="text-green-600 font-medium cursor-pointer hover:underline ml-2"
+                    onClick={() => setShowFullText(false)}
+                  >
+                    voir moins
+                  </span>
+                )}
+              </>
             )}
           </p>
         </div>
