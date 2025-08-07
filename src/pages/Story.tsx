@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share, MoreHorizontal, Plus, Search, Play, Menu, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Heart, MessageCircle, Share, MoreHorizontal, Plus, Search, Play, Menu, User, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import BottomNavigation from '@/components/BottomNavigation';
 import SideMenu from '@/components/SideMenu';
 import NotificationIcon from '@/components/NotificationIcon';
@@ -19,13 +20,57 @@ const Story = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const { stories, loading, likeStory, unlikeStory, checkIfLiked, addStoryView } = useStories();
+  const { stories, loading, likeStory, unlikeStory, checkIfLiked, addStoryView, deleteStory } = useStories();
   
   const currentStory = stories[currentStoryIndex];
   const { comments } = useStoryComments(currentStory?.id || '');
+
+  // Fonction pour passer à la story suivante
+  const goToNextStory = () => {
+    if (currentStoryIndex < stories.length - 1) {
+      setCurrentStoryIndex(currentStoryIndex + 1);
+    } else {
+      // Retour à la première story ou fermer
+      setCurrentStoryIndex(0);
+    }
+  };
+
+  // Fonction pour démarrer le timer d'auto-progression
+  const startTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    if (!isPaused && currentStory) {
+      let duration = 6000; // 6 secondes par défaut pour les images
+
+      if (currentStory.media_type === 'video' && videoRef.current) {
+        // Pour les vidéos, utiliser la durée réelle (max 60 secondes)
+        const videoDuration = Math.min(videoRef.current.duration * 1000, 60000);
+        duration = videoDuration || 6000;
+      }
+
+      timerRef.current = setTimeout(() => {
+        goToNextStory();
+      }, duration);
+    }
+  };
+
+  // Nettoyage du timer
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   // Suivre les vues et les likes pour la story actuelle
   useEffect(() => {
@@ -34,6 +79,36 @@ const Story = () => {
       checkIfLiked(currentStory.id).then(setIsLiked);
     }
   }, [currentStory?.id, user]);
+
+  // Gérer la barre de progression et le timer
+  useEffect(() => {
+    if (progressBarRef.current) {
+      progressBarRef.current.classList.remove('story-progress-bar');
+      if (isPaused) {
+        progressBarRef.current.classList.add('paused');
+      } else {
+        progressBarRef.current.classList.remove('paused');
+        // Force un reflow pour redémarrer l'animation
+        progressBarRef.current.offsetHeight;
+        progressBarRef.current.classList.add('story-progress-bar');
+      }
+    }
+    startTimer();
+  }, [currentStoryIndex, isPaused, currentStory]);
+
+  // Gérer la pause/lecture au clic
+  const handleStoryClick = () => {
+    setIsPaused(!isPaused);
+    
+    // Gérer la pause/lecture de la vidéo
+    if (currentStory?.media_type === 'video' && videoRef.current) {
+      if (!isPaused) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+    }
+  };
 
   const handleLike = async () => {
     if (!currentStory || !user) {
@@ -71,6 +146,29 @@ const Story = () => {
       navigate('/profile');
     } else {
       navigate('/auth');
+    }
+  };
+
+  const handleDeleteStory = async () => {
+    if (!currentStory || !user) {
+      toast.error('Impossible de supprimer cette story');
+      return;
+    }
+
+    try {
+      await deleteStory(currentStory.id);
+      toast.success('Story supprimée');
+      
+      // Passer à la story suivante ou précédente
+      if (stories.length > 1) {
+        if (currentStoryIndex > 0) {
+          setCurrentStoryIndex(currentStoryIndex - 1);
+        } else if (currentStoryIndex < stories.length - 1) {
+          setCurrentStoryIndex(0);
+        }
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
     }
   };
 
@@ -147,71 +245,44 @@ const Story = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header avec logo, notifications et photo de profil */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 border-b sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSideMenuOpen(true)}
-                className="lg:hidden text-white hover:bg-white/20"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-              <div className="flex items-center space-x-2">
-                <img 
-                  src="/lovable-uploads/35ad5651-d83e-4704-9851-61f3ad9fb0c3.png" 
-                  alt="PENDOR Logo" 
-                  className="w-8 h-8 rounded-full"
-                />
-                <h1 className="text-xl font-bold text-white">PENDOR</h1>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              {user && <NotificationIcon />}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleProfileClick}
-                className="text-white hover:bg-white/20"
-              >
-                {user ? (
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
-                      {user.email?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                ) : (
-                  <User className="h-6 w-6" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-black">
       {/* Contenu Story */}
-      <div className="relative bg-black" style={{ height: 'calc(100vh - 73px - 80px)' }}>
-        {/* Média principal */}
-        <div className="absolute inset-0">
+      <div className="relative bg-black" style={{ height: 'calc(100vh - 80px)' }}>
+        {/* Média principal avec zone cliquable pour pause/lecture */}
+        <div className="absolute inset-0" onClick={handleStoryClick}>
           {currentStory?.media_url ? (
             currentStory.media_type === 'video' ? (
               <video 
+                ref={videoRef}
                 className="w-full h-full object-cover" 
-                autoPlay 
-                loop 
-                muted
+                autoPlay={!isPaused}
+                loop={false}
                 src={currentStory.media_url}
+                onLoadedMetadata={startTimer}
+                onEnded={goToNextStory}
+                onError={(e) => {
+                  console.error('Video error:', e);
+                  console.log('Video URL:', currentStory.media_url);
+                }}
               />
             ) : (
               <img 
                 className="w-full h-full object-cover" 
                 src={currentStory.media_url} 
-                alt="Story content" 
+                alt="Story content"
+                onError={(e) => {
+                  console.error('Image error:', e);
+                  console.log('Image URL:', currentStory.media_url);
+                  // Afficher une image de fallback si l'image ne se charge pas
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.querySelector('.fallback-content')?.classList.remove('hidden');
+                }}
+                onLoad={() => {
+                  // Image chargée avec succès, démarrer le timer
+                  if (!isPaused) {
+                    startTimer();
+                  }
+                }}
               />
             )
           ) : (
@@ -219,6 +290,30 @@ const Story = () => {
               <Play className="w-16 h-16 text-white/70" />
             </div>
           )}
+          
+          {/* Contenu de fallback si l'image ne se charge pas */}
+          <div className="fallback-content hidden w-full h-full bg-gradient-to-br from-purple-900 via-pink-800 to-orange-600 flex items-center justify-center flex-col">
+            <Play className="w-16 h-16 text-white/70 mb-4" />
+            <p className="text-white text-center px-4">
+              {currentStory?.content || 'Contenu indisponible'}
+            </p>
+          </div>
+          
+          {/* Indicateur de pause */}
+          {isPaused && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
+                <Play className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Barre de progression unique pour la story en cours */}
+        <div className="absolute top-1 left-0 right-0 z-20 px-2">
+          <div className="w-full h-0.5 bg-white/30 rounded-full overflow-hidden">
+            <div ref={progressBarRef} className="h-full bg-white rounded-full" />
+          </div>
         </div>
 
         {/* Overlay supérieur */}
@@ -226,11 +321,11 @@ const Story = () => {
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
             <span className="text-white font-medium text-sm">
-              {currentStory?.location || 'En direct'}
+              {currentStory?.profiles?.username || currentStory?.profiles?.display_name || 'Utilisateur'}
             </span>
           </div>
           <Badge variant="secondary" className="bg-black/50 text-white border-none text-xs px-2 py-1">
-            LIVE {formatNumber(currentStory?.views || 0)}
+            {formatNumber(currentStory?.views || 0)} vues
           </Badge>
         </div>
 
@@ -263,9 +358,24 @@ const Story = () => {
             <Share className="w-5 h-5" />
           </Button>
           
-          <Button size="icon" variant="ghost" className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white">
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white">
+                <MoreHorizontal className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
+              {user && currentStory?.user_id === user.id && (
+                <DropdownMenuItem 
+                  onClick={handleDeleteStory}
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Supprimer
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Informations utilisateur et description */}
@@ -295,7 +405,7 @@ const Story = () => {
         )}
 
         {/* Miniatures des autres stories */}
-        <div className="absolute bottom-2 left-3 right-3 z-10">
+        <div className="absolute bottom-20 left-3 right-3 z-10">
           <div className="flex space-x-1.5 overflow-x-auto pb-1">
             {stories.slice(0, 5).map((story, index) => (
               <div 
@@ -303,15 +413,31 @@ const Story = () => {
                 className={`flex-shrink-0 cursor-pointer ${index === currentStoryIndex ? 'ring-2 ring-white' : ''}`}
                 onClick={() => setCurrentStoryIndex(index)}
               >
-                <div className="w-12 h-16 bg-gray-700 rounded-md overflow-hidden">
+                <div className="w-12 h-16 bg-gray-700 rounded-md overflow-hidden relative">
                   {story.media_url ? (
-                    <img 
-                      src={story.media_url} 
-                      alt="Story thumbnail" 
-                      className="w-full h-full object-cover"
-                    />
+                    story.media_type === 'video' ? (
+                      <div className="relative w-full h-full">
+                        <video 
+                          src={story.media_url} 
+                          className="w-full h-full object-cover"
+                          muted
+                          preload="metadata"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Play className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <img 
+                        src={story.media_url} 
+                        alt="Story thumbnail" 
+                        className="w-full h-full object-cover"
+                      />
+                    )
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500"></div>
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <Play className="w-3 h-3 text-white" />
+                    </div>
                   )}
                 </div>
               </div>
