@@ -626,6 +626,7 @@ export type Database = {
           likes: number | null
           match_teams: string | null
           odds: number | null
+          post_type: string | null
           prediction_text: string | null
           reservation_code: string | null
           shares: number | null
@@ -648,6 +649,7 @@ export type Database = {
           likes?: number | null
           match_teams?: string | null
           odds?: number | null
+          post_type?: string | null
           prediction_text?: string | null
           reservation_code?: string | null
           shares?: number | null
@@ -670,6 +672,7 @@ export type Database = {
           likes?: number | null
           match_teams?: string | null
           odds?: number | null
+          post_type?: string | null
           prediction_text?: string | null
           reservation_code?: string | null
           shares?: number | null

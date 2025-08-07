@@ -159,6 +159,7 @@ const Index = () => {
     return {
     id: post.id,
     user_id: post.user_id, // Ajout du user_id pour la détection du propriétaire
+    post_type: post.post_type || 'prediction', // Ajout du type de post
     user: {
       username: displayUsername,
       avatar: displayAvatar,

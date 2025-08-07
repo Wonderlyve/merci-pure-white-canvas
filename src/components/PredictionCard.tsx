@@ -40,6 +40,7 @@ interface PredictionCardProps {
   prediction: {
     id: string;
     user_id?: string;
+    post_type?: string;
     user: {
       username: string;
       avatar: string;
@@ -534,7 +535,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
           </ProtectedComponent>
         </div>
 
-        {/* Match Info */}
+        {/* Match Info or News Title */}
         <div className="mb-3">
           <div className="font-semibold text-lg text-gray-900 mb-2">
             {prediction.match.length > 45 ? (
@@ -548,21 +549,62 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
               prediction.match
             )}
           </div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600">Cote: {prediction.odds}</span>
-              {prediction.totalOdds && (
-                <span className="text-sm text-orange-600 font-medium">
-                  Cote totale: {prediction.totalOdds}
+          
+          {prediction.post_type !== 'news' && (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-600">Cote: {prediction.odds}</span>
+                  {prediction.totalOdds && (
+                    <span className="text-sm text-orange-600 font-medium">
+                      Cote totale: {prediction.totalOdds}
+                    </span>
+                  )}
+                </div>
+                <ProtectedComponent fallback={
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed">
+                    Se connecter
+                  </Button>
+                }>
+                  {!isCurrentUser && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 px-2 text-xs"
+                      onClick={() => handleMenuAction('follow')}
+                      disabled={actionsLoading || followLoading}
+                    >
+                      {isFollowing ? 'Suivi' : 'Suivre'}
+                    </Button>
+                  )}
+                </ProtectedComponent>
+              </div>
+              
+              {/* Confidence Stars */}
+              <div className="flex items-center space-x-1">
+                <span className="text-sm text-gray-600">Confiance:</span>
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${
+                      i < prediction.confidence ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="text-sm text-yellow-600 font-medium ml-1">
+                  {prediction.confidence === 5 ? '🔥🔥' : prediction.confidence >= 4 ? '🔥' : ''}
                 </span>
-              )}
-            </div>
-            <ProtectedComponent fallback={
-              <Button variant="outline" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed">
-                Se connecter
-              </Button>
-            }>
-              {!isCurrentUser && (
+              </div>
+            </>
+          )}
+          
+          {prediction.post_type === 'news' && !isCurrentUser && (
+            <div className="flex justify-end">
+              <ProtectedComponent fallback={
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed">
+                  Se connecter
+                </Button>
+              }>
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -572,25 +614,9 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                 >
                   {isFollowing ? 'Suivi' : 'Suivre'}
                 </Button>
-              )}
-            </ProtectedComponent>
-          </div>
-          
-          {/* Confidence Stars */}
-          <div className="flex items-center space-x-1">
-            <span className="text-sm text-gray-600">Confiance:</span>
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`w-4 h-4 ${
-                  i < prediction.confidence ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                }`}
-              />
-            ))}
-            <span className="text-sm text-yellow-600 font-medium ml-1">
-              {prediction.confidence === 5 ? '🔥🔥' : prediction.confidence >= 4 ? '🔥' : ''}
-            </span>
-          </div>
+              </ProtectedComponent>
+            </div>
+          )}
         </div>
 
         {/* Media Content */}
@@ -759,32 +785,34 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
             </button>
           </div>
           
-          <ProtectedComponent fallback={
-            <Button className="bg-gray-400 text-white text-xs px-3 py-1 h-7 cursor-not-allowed shrink-0" size="sm" disabled>
-              Se connecter
-            </Button>
-          }>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 h-7 shrink-0" 
-                  size="sm"
-                  onClick={async () => {
-                    // Add view when user clicks to see prediction
-                    await addView(prediction.id);
-                  }}
-                >
-                  Voir le pronostique
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Pronostics de {prediction.user.username}</DialogTitle>
-                </DialogHeader>
-                <PredictionModal prediction={prediction} />
-              </DialogContent>
-            </Dialog>
-          </ProtectedComponent>
+          {prediction.post_type !== 'news' && (
+            <ProtectedComponent fallback={
+              <Button className="bg-gray-400 text-white text-xs px-3 py-1 h-7 cursor-not-allowed shrink-0" size="sm" disabled>
+                Se connecter
+              </Button>
+            }>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 h-7 shrink-0" 
+                    size="sm"
+                    onClick={async () => {
+                      // Add view when user clicks to see prediction
+                      await addView(prediction.id);
+                    }}
+                  >
+                    Voir le pronostique
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Pronostics de {prediction.user.username}</DialogTitle>
+                  </DialogHeader>
+                  <PredictionModal prediction={prediction} />
+                </DialogContent>
+              </Dialog>
+            </ProtectedComponent>
+          )}
         </div>
       </CardContent>
       
