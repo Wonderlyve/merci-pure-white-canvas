@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Camera, Video, Upload, X } from 'lucide-react';
 import { useStories } from '@/hooks/useStories';
+import { VideoOptimizer } from '@/optimization/VideoOptimizer';
 import { toast } from 'sonner';
 
 interface CreateStoryModalProps {
@@ -19,12 +21,31 @@ export const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ open, onOpen
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showFormatWarning, setShowFormatWarning] = useState(false);
   
   const { createStory } = useStories();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Vérifier si c'est une vidéo
+      if (file.type.startsWith('video/')) {
+        try {
+          const videoInfo = await VideoOptimizer.getVideoInfo(file);
+          
+          // Vérifier si la vidéo est verticale (hauteur > largeur)
+          if (videoInfo.width >= videoInfo.height) {
+            setShowFormatWarning(true);
+            event.target.value = ''; // Reset l'input
+            return;
+          }
+        } catch (error) {
+          toast.error('Erreur lors de l\'analyse de la vidéo');
+          event.target.value = '';
+          return;
+        }
+      }
+      
       setMediaFile(file);
       const previewUrl = URL.createObjectURL(file);
       setMediaPreview(previewUrl);
@@ -43,10 +64,34 @@ export const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ open, onOpen
       let mediaUrl = '';
       let mediaType: 'image' | 'video' | undefined;
 
-      // Simuler l'upload du fichier (ici vous pourriez uploader vers Supabase Storage)
+      // Upload du fichier vers Supabase Storage
       if (mediaFile) {
-        // Dans un vrai projet, vous uploaderiez le fichier vers Supabase Storage
-        mediaUrl = mediaPreview || '';
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: userData } = await supabase.auth.getUser();
+        
+        if (!userData.user) {
+          toast.error('Vous devez être connecté');
+          return;
+        }
+
+        const fileExt = mediaFile.name.split('.').pop();
+        const fileName = `${userData.user.id}/${Date.now()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('stories')
+          .upload(fileName, mediaFile);
+
+        if (error) {
+          console.error('Upload error:', error);
+          toast.error('Erreur lors de l\'upload du fichier');
+          return;
+        }
+
+        const { data: publicUrl } = supabase.storage
+          .from('stories')
+          .getPublicUrl(fileName);
+          
+        mediaUrl = publicUrl.publicUrl;
         mediaType = mediaFile.type.startsWith('video/') ? 'video' : 'image';
       }
 
@@ -188,6 +233,24 @@ export const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ open, onOpen
           </div>
         </div>
       </DialogContent>
+      
+      {/* Popup d'avertissement pour format vidéo */}
+      <AlertDialog open={showFormatWarning} onOpenChange={setShowFormatWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Format vidéo non supporté</AlertDialogTitle>
+            <AlertDialogDescription>
+              Les stories n'acceptent que les vidéos au format vertical (portrait). 
+              Veuillez sélectionner une vidéo dont la hauteur est supérieure à la largeur.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowFormatWarning(false)}>
+              Compris
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
