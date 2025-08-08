@@ -126,7 +126,7 @@
 }
 
 .story-progress-bar {
-  animation: storyProgress 6s linear forwards;
+  animation: storyProgress 60s linear forwards;
   animation-play-state: running;
 }
 

@@ -51,10 +51,9 @@ const Story = () => {
     if (!isPaused && currentStory) {
       let duration = 6000; // 6 secondes par défaut pour les images
 
-      if (currentStory.media_type === 'video' && videoRef.current) {
-        // Pour les vidéos, utiliser la durée réelle (max 60 secondes)
-        const videoDuration = Math.min(videoRef.current.duration * 1000, 60000);
-        duration = videoDuration || 6000;
+      if (currentStory.media_type === 'video') {
+        // Toutes les vidéos durent exactement 60 secondes (1 minute)
+        duration = 60000;
       }
 
       timerRef.current = setTimeout(() => {
@@ -405,7 +404,7 @@ const Story = () => {
         )}
 
         {/* Miniatures des autres stories */}
-        <div className="absolute bottom-20 left-3 right-3 z-10">
+        <div className="absolute bottom-16 left-3 right-3 z-10">
           <div className="flex space-x-1.5 overflow-x-auto pb-1">
             {stories.slice(0, 5).map((story, index) => (
               <div 
