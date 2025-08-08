@@ -21,6 +21,8 @@ const Story = () => {
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
@@ -39,6 +41,45 @@ const Story = () => {
     } else {
       // Retour à la première story ou fermer
       setCurrentStoryIndex(0);
+    }
+  };
+
+  // Fonction pour passer à la story précédente
+  const goToPreviousStory = () => {
+    if (currentStoryIndex > 0) {
+      setCurrentStoryIndex(currentStoryIndex - 1);
+    } else {
+      // Aller à la dernière story
+      setCurrentStoryIndex(stories.length - 1);
+    }
+  };
+
+  // Minimum swipe distance pour déclencher une action
+  const minSwipeDistance = 50;
+
+  // Gestion du swipe vertical
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientY);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientY);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isSwipeUp = distance > minSwipeDistance;
+    const isSwipeDown = distance < -minSwipeDistance;
+
+    if (isSwipeUp) {
+      // Swipe vers le haut = story suivante
+      goToNextStory();
+    } else if (isSwipeDown) {
+      // Swipe vers le bas = story précédente
+      goToPreviousStory();
     }
   };
 
@@ -260,8 +301,14 @@ const Story = () => {
     <div className="min-h-screen bg-black">
       {/* Contenu Story */}
       <div className="relative bg-black" style={{ height: 'calc(100vh - 80px)' }}>
-        {/* Média principal avec zone cliquable pour pause/lecture */}
-        <div className="absolute inset-0" onClick={handleStoryClick}>
+        {/* Média principal avec zone cliquable pour pause/lecture et swipe vertical */}
+        <div 
+          className="absolute inset-0" 
+          onClick={handleStoryClick}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           {currentStory?.media_url ? (
             currentStory.media_type === 'video' ? (
               <video 
