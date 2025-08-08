@@ -52,8 +52,8 @@ const Story = () => {
       let duration = 6000; // 6 secondes par défaut pour les images
 
       if (currentStory.media_type === 'video') {
-        // Toutes les vidéos durent exactement 60 secondes (1 minute)
-        duration = 60000;
+        // Toutes les vidéos durent exactement 120 secondes (2 minutes)
+        duration = 120000;
       }
 
       timerRef.current = setTimeout(() => {
@@ -62,14 +62,27 @@ const Story = () => {
     }
   };
 
-  // Nettoyage du timer
+  // Nettoyage du timer et gestion de la visibilité de la page
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Arrêter la vidéo quand l'utilisateur change d'app ou verrouille l'écran
+        if (currentStory?.media_type === 'video' && videoRef.current) {
+          videoRef.current.pause();
+        }
+        setIsPaused(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [currentStory?.media_type]);
 
   // Suivre les vues et les likes pour la story actuelle
   useEffect(() => {
@@ -412,7 +425,7 @@ const Story = () => {
                 className={`flex-shrink-0 cursor-pointer ${index === currentStoryIndex ? 'ring-2 ring-white' : ''}`}
                 onClick={() => setCurrentStoryIndex(index)}
               >
-                <div className="w-12 h-16 bg-gray-700 rounded-md overflow-hidden relative">
+                <div className="w-12 h-12 bg-gray-700 rounded-md overflow-hidden relative">
                   {story.media_url ? (
                     story.media_type === 'video' ? (
                       <div className="relative w-full h-full">
