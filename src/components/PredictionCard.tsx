@@ -35,6 +35,7 @@ import { usePostComments } from '@/hooks/usePostComments';
 import { CommentsBottomSheet } from '@/components/CommentsBottomSheet';
 import EditPostModal from '@/components/EditPostModal';
 import { usePosts } from '@/hooks/usePosts';
+import ImageViewer from './ImageViewer';
 
 interface PredictionCardProps {
   prediction: {
@@ -119,6 +120,8 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
+  const [showPredictionModal, setShowPredictionModal] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideControlsTimeout = useRef<NodeJS.Timeout>();
 
@@ -153,7 +156,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
       // Get the user profile by username
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id')
+        .select('user_id')
         .eq('username', prediction.user.username)
         .single();
 
@@ -163,13 +166,12 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
         return;
       }
 
-      if (profile.id === user?.id) {
+      if (profile.user_id === user?.id) {
         // Navigate to own profile
         navigate('/profile');
       } else {
-        // Navigate to other user's profile - for now just show a message
-        // In a real app, you'd navigate to a user profile page with the user ID
-        toast.info(`Profil de ${prediction.user.username} - Fonctionnalité en développement`);
+        // Navigate to other user's profile
+        navigate(`/profile?userId=${profile.user_id}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -397,7 +399,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
   }
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
+    <Card className="shadow-sm hover:shadow-md transition-shadow" data-prediction-id={prediction.id}>
       <CardContent className="p-4">
         {/* User Info */}
         <div className="flex items-center justify-between mb-3">
@@ -661,6 +663,21 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                   playsInline
                   preload="metadata"
                   controls={false}
+                  onMouseEnter={() => {
+                    // Préchargement intelligent au survol
+                    if (prediction.video) {
+                      const videoContainer = document.querySelector(`[data-prediction-id="${prediction.id}"]`);
+                      if (videoContainer) {
+                        const nextPrediction = videoContainer.parentElement?.nextElementSibling?.querySelector('video source');
+                        if (nextPrediction?.getAttribute('src')) {
+                          fetch(nextPrediction.getAttribute('src')!, { 
+                            mode: 'cors', 
+                            cache: 'force-cache' 
+                          }).catch(() => {});
+                        }
+                      }
+                    }
+                  }}
                 >
                   <source src={prediction.video} type="video/mp4" />
                 </video>
@@ -724,11 +741,14 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                 </div>
               </div>
             ) : prediction.image && (
-              <img
-                src={prediction.image}
-                alt="Contenu du post"
-                className="w-full h-48 object-cover"
-              />
+              <div className="w-full h-48 overflow-hidden bg-gray-100 rounded-lg cursor-pointer" onClick={() => setShowImageViewer(true)}>
+                <img
+                  src={prediction.image}
+                  alt="Contenu du post"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                  loading="lazy"
+                />
+              </div>
             )}
           </div>
         )}
@@ -785,7 +805,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
             <ProtectedComponent fallback={
               <button className="flex items-center space-x-1 text-gray-400 cursor-not-allowed">
                 <MessageCircle className="w-4 h-4" />
-                <span className="text-xs font-medium">0</span>
+                <span className="text-xs font-medium">{commentsCount}</span>
               </button>
             }>
               <CommentsBottomSheet postId={prediction.id.toString()} commentsCount={commentsCount}>
@@ -824,7 +844,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                 Se connecter
               </Button>
             }>
-              <Dialog>
+              <Dialog open={showPredictionModal} onOpenChange={setShowPredictionModal}>
                 <DialogTrigger asChild>
                   <Button 
                     className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 h-7 shrink-0" 
@@ -832,6 +852,7 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                     onClick={async () => {
                       // Add view when user clicks to see prediction
                       await addView(prediction.id);
+                      setShowPredictionModal(true);
                     }}
                   >
                     Voir le pronostique
@@ -841,7 +862,10 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
                   <DialogHeader>
                     <DialogTitle>Pronostics de {prediction.user.username}</DialogTitle>
                   </DialogHeader>
-                  <PredictionModal prediction={prediction} />
+                  <PredictionModal 
+                    prediction={prediction} 
+                    onClose={() => setShowPredictionModal(false)} 
+                  />
                 </DialogContent>
               </Dialog>
             </ProtectedComponent>
@@ -881,6 +905,16 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
         }}
         onSave={handleSavePost}
       />
+      
+      {/* Image Viewer */}
+      {prediction.image && (
+        <ImageViewer
+          isOpen={showImageViewer}
+          onClose={() => setShowImageViewer(false)}
+          imageUrl={prediction.image}
+          altText="Contenu du post"
+        />
+      )}
     </Card>
   );
 };
