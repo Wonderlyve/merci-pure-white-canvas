@@ -3,6 +3,7 @@ import Hls from 'hls.js';
 import { Loader2, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { videoPreloader } from '@/optimization/VideoPreloader';
 import { videoCache } from '@/optimization/VideoCache';
+import VideoThumbnail from './VideoThumbnail';
 
 interface SmartVideoProps {
   src: string;
@@ -57,6 +58,8 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
   const [cachedSrc, setCachedSrc] = useState<string | null>(null);
+  const [customThumbnail, setCustomThumbnail] = useState<string | null>(null);
+  const [showVideo, setShowVideo] = useState(false);
 
   // Préchargement intelligent des vidéos proches
   useEffect(() => {
@@ -206,12 +209,14 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
   // Event handlers pour la vidéo
   const handleLoadedData = useCallback(() => {
     setIsLoading(false);
+    setShowVideo(true);
     onLoadedData?.();
     onVideoReady?.();
   }, [onLoadedData, onVideoReady]);
 
   const handleCanPlay = useCallback(() => {
     setIsLoading(false);
+    setShowVideo(true);
     onCanPlay?.();
     onVideoReady?.();
   }, [onCanPlay, onVideoReady]);
@@ -281,15 +286,32 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
       className={`relative ${className}`}
       onMouseEnter={handleMouseEnter}
     >
-      {/* Poster/Thumbnail */}
-      {poster && (isLoading || !hasStarted) && (
+      {/* Thumbnail personnalisé ou poster */}
+      {(isLoading || !showVideo || !hasStarted) && (
         <div className="absolute inset-0 z-10">
-          <img 
-            src={poster}
-            alt="Video thumbnail"
-            className="w-full h-full object-cover"
-            loading="eager"
-          />
+          {customThumbnail ? (
+            <img 
+              src={customThumbnail}
+              alt="Video thumbnail"
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
+          ) : poster ? (
+            <img 
+              src={poster}
+              alt="Video thumbnail"
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
+          ) : (
+            <VideoThumbnail
+              videoSrc={src}
+              className="w-full h-full"
+              onThumbnailGenerated={(thumbnailUrl) => {
+                setCustomThumbnail(thumbnailUrl);
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -321,9 +343,8 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
       {/* Vidéo */}
       <video
         ref={videoRef}
-        className="w-full h-full object-cover"
+        className={`w-full h-full object-cover transition-opacity duration-300 ${showVideo ? 'opacity-100' : 'opacity-0'}`}
         src={!isHLS(src) ? (cachedSrc || src) : undefined}
-        poster={poster}
         muted={isMuted}
         loop={loop}
         preload={preload}
