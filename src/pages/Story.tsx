@@ -377,9 +377,9 @@ const Story = () => {
                         isActive={index === currentStoryIndex}
                         isPaused={isPaused}
                         autoPlay={true}
-                        muted={true}
+                        muted={false}
                         loop={false}
-                        preload="metadata"
+                        preload="auto"
                         className="w-full h-full object-cover"
                         nearbyVideos={stories.map(s => s.media_url).filter(Boolean)}
                         currentIndex={index}
