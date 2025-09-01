@@ -184,13 +184,15 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
 
     const handlePlayPause = async () => {
       try {
-        if (isActive && !isPaused && !hasStarted) {
-          if (autoPlay) {
-            await video.play();
-            setHasStarted(true);
-          }
-        } else if (isActive && !isPaused && hasStarted) {
-          if (video.paused) {
+        if (isActive && !isPaused) {
+          if (autoPlay && !hasStarted) {
+            // Attendre que la vidéo soit vraiment prête
+            if (video.readyState >= 3) { // HAVE_FUTURE_DATA
+              await video.play();
+              setHasStarted(true);
+              setShowVideo(true); // Montrer la vidéo seulement quand elle joue
+            }
+          } else if (hasStarted && video.paused) {
             await video.play();
           }
         } else {
@@ -209,17 +211,39 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
   // Event handlers pour la vidéo
   const handleLoadedData = useCallback(() => {
     setIsLoading(false);
-    setShowVideo(true);
     onLoadedData?.();
-    onVideoReady?.();
-  }, [onLoadedData, onVideoReady]);
+    // Ne pas montrer la vidéo tout de suite, attendre qu'elle joue
+    if (autoPlay && isActive && !isPaused) {
+      const video = videoRef.current;
+      if (video && video.readyState >= 3) {
+        video.play().then(() => {
+          setShowVideo(true);
+          setHasStarted(true);
+          onVideoReady?.();
+        }).catch(console.warn);
+      }
+    } else {
+      onVideoReady?.();
+    }
+  }, [onLoadedData, onVideoReady, autoPlay, isActive, isPaused]);
 
   const handleCanPlay = useCallback(() => {
     setIsLoading(false);
-    setShowVideo(true);
     onCanPlay?.();
-    onVideoReady?.();
-  }, [onCanPlay, onVideoReady]);
+    // Essayer de jouer si c'est autoplay et actif
+    if (autoPlay && isActive && !isPaused && !hasStarted) {
+      const video = videoRef.current;
+      if (video) {
+        video.play().then(() => {
+          setShowVideo(true);
+          setHasStarted(true);
+          onVideoReady?.();
+        }).catch(console.warn);
+      }
+    } else {
+      onVideoReady?.();
+    }
+  }, [onCanPlay, onVideoReady, autoPlay, isActive, isPaused, hasStarted]);
 
   const handlePlay = useCallback(() => {
     setIsPlaying(true);
@@ -286,9 +310,9 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
       className={`relative ${className}`}
       onMouseEnter={handleMouseEnter}
     >
-      {/* Thumbnail personnalisé ou poster */}
-      {(isLoading || !showVideo || !hasStarted) && (
-        <div className="absolute inset-0 z-10">
+      {/* Thumbnail personnalisé ou poster - affiché jusqu'à ce que la vidéo joue */}
+      {(isLoading || !showVideo) && (
+        <div className="absolute inset-0 z-10 bg-black">
           {customThumbnail ? (
             <img 
               src={customThumbnail}
@@ -311,6 +335,15 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
                 setCustomThumbnail(thumbnailUrl);
               }}
             />
+          )}
+          
+          {/* Icône play sur le thumbnail */}
+          {!isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                <Play className="w-8 h-8 text-white ml-1" />
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -343,7 +376,7 @@ const SmartVideo: React.FC<SmartVideoProps> = ({
       {/* Vidéo */}
       <video
         ref={videoRef}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${showVideo ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${showVideo ? 'opacity-100' : 'opacity-0'}`}
         src={!isHLS(src) ? (cachedSrc || src) : undefined}
         muted={isMuted}
         loop={loop}
