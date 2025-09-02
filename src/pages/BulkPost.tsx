@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Download, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, Download, FileText, CheckCircle, XCircle, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePosts } from '@/hooks/usePosts';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,6 +27,7 @@ interface CSVRow {
 const BulkPost = () => {
   const [file, setFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
+  const [images, setImages] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<{ success: number; failed: number }>({ success: 0, failed: 0 });
@@ -50,7 +51,7 @@ const BulkPost = () => {
       filename = 'template_posts_combine.csv';
     }
     
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -117,15 +118,36 @@ const BulkPost = () => {
           setCsvData([]);
         }
       };
-      reader.readAsText(selectedFile);
+      reader.readAsText(selectedFile, 'UTF-8');
     } else {
       toast.error('Veuillez sélectionner un fichier CSV valide');
+    }
+  };
+
+  const handleImagesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedImages = Array.from(event.target.files || []);
+    const validImages = selectedImages.filter(file => 
+      file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024 // Max 10MB
+    );
+    
+    if (validImages.length !== selectedImages.length) {
+      toast.error('Certains fichiers ont été ignorés (taille > 10MB ou format non supporté)');
+    }
+    
+    setImages(validImages);
+    if (validImages.length > 0) {
+      toast.success(`${validImages.length} images importées`);
     }
   };
 
   const processAllPosts = async () => {
     if (csvData.length === 0) {
       toast.error('Aucune donnée à traiter');
+      return;
+    }
+
+    if (images.length > 0 && images.length !== csvData.length) {
+      toast.error(`Le nombre d'images (${images.length}) doit correspondre au nombre de posts (${csvData.length}) ou être vide`);
       return;
     }
 
@@ -138,6 +160,7 @@ const BulkPost = () => {
 
     for (let i = 0; i < csvData.length; i++) {
       const row = csvData[i];
+      const image = images[i] || null;
       
       try {
         await createPost({
@@ -147,9 +170,10 @@ const BulkPost = () => {
           analysis: row.analysis,
           odds: row.odds,
           confidence: row.confidence,
-          username: row.username || 'Smart', // Par défaut Smart si pas de username spécifié
+          username: row.username || 'Smart',
           bet_type: row.bet_type || 'simple',
-          match_time: row.match_time
+          match_time: row.match_time,
+          image_file: image
         });
         successCount++;
       } catch (error) {
@@ -258,13 +282,13 @@ const BulkPost = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="w-5 h-5" />
-                  Importer le fichier CSV
+                  Importer les fichiers
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="csv-file">Fichier CSV</Label>
+                    <Label htmlFor="csv-file">Fichier CSV (UTF-8)</Label>
                     <Input
                       id="csv-file"
                       type="file"
@@ -272,13 +296,45 @@ const BulkPost = () => {
                       onChange={handleFileChange}
                       className="mt-1"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Le fichier CSV doit être encodé en UTF-8 pour supporter les accents
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="images-file">Images (optionnel)</Label>
+                    <Input
+                      id="images-file"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImagesChange}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Sélectionnez des images dans l'ordre correspondant aux posts CSV (max 10MB chacune)
+                    </p>
                   </div>
                   
                   {file && (
                     <Alert>
                       <FileText className="h-4 w-4" />
                       <AlertDescription>
-                        Fichier sélectionné: {file.name} ({csvData.length} posts détectés)
+                        Fichier CSV: {file.name} ({csvData.length} posts détectés)
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {images.length > 0 && (
+                    <Alert>
+                      <ImageIcon className="h-4 w-4" />
+                      <AlertDescription>
+                        {images.length} images importées
+                        {csvData.length > 0 && images.length !== csvData.length && (
+                          <span className="text-orange-600 ml-2">
+                            ⚠️ Le nombre d'images ({images.length}) ne correspond pas au nombre de posts ({csvData.length})
+                          </span>
+                        )}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -301,11 +357,29 @@ const BulkPost = () => {
                     <div className="max-h-60 overflow-y-auto space-y-2">
                       {csvData.slice(0, 5).map((row, index) => (
                         <div key={index} className="p-3 border rounded-lg">
-                          <p className="font-medium truncate">{row.content}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {row.sport} • {row.match_teams} • Cote: {row.odds} • Confiance: {row.confidence}% • Type: {row.bet_type === 'combine' ? 'Combiné' : 'Simple'} • Utilisateur: {row.username || 'Smart'}
-                            {row.match_time && ` • Match: ${new Date(row.match_time).toLocaleString('fr-FR')}`}
-                          </p>
+                          <div className="flex gap-3">
+                            {images[index] && (
+                              <div className="flex-shrink-0">
+                                <img
+                                  src={URL.createObjectURL(images[index])}
+                                  alt={`Preview ${index + 1}`}
+                                  className="w-16 h-16 object-cover rounded-lg"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="font-medium truncate">{row.content}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {row.sport} • {row.match_teams} • Cote: {row.odds} • Confiance: {row.confidence}% • Type: {row.bet_type === 'combine' ? 'Combiné' : 'Simple'} • Utilisateur: {row.username || 'Smart'}
+                                {row.match_time && ` • Match: ${new Date(row.match_time).toLocaleString('fr-FR')}`}
+                              </p>
+                              {images[index] && (
+                                <p className="text-xs text-green-600 mt-1">
+                                  📷 Image associée: {images[index].name}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ))}
                       {csvData.length > 5 && (
