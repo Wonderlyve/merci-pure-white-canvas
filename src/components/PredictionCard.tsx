@@ -36,7 +36,6 @@ import { CommentsBottomSheet } from '@/components/CommentsBottomSheet';
 import EditPostModal from '@/components/EditPostModal';
 import { usePosts } from '@/hooks/usePosts';
 import ImageViewer from './ImageViewer';
-import AuthModal from './AuthModal';
 
 interface PredictionCardProps {
   prediction: {
@@ -123,7 +122,6 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
   const [showFullText, setShowFullText] = useState(false);
   const [showPredictionModal, setShowPredictionModal] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideControlsTimeout = useRef<NodeJS.Timeout>();
 
@@ -842,12 +840,8 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
           
           {prediction.sport !== 'News' && (
             <ProtectedComponent fallback={
-              <Button 
-                className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 h-7 shrink-0 text-xs truncate min-w-0"
-                size="sm"
-                onClick={() => setShowAuthModal(true)}
-              >
-                Se connecter pour voir le pronostic
+              <Button className="bg-gray-400 text-white text-xs px-3 py-1 h-7 cursor-not-allowed shrink-0" size="sm" disabled>
+                Se connecter
               </Button>
             }>
               <Dialog open={showPredictionModal} onOpenChange={setShowPredictionModal}>
@@ -921,12 +915,6 @@ const PredictionCard = ({ prediction, onOpenModal }: PredictionCardProps) => {
           altText="Contenu du post"
         />
       )}
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
     </Card>
   );
 };
