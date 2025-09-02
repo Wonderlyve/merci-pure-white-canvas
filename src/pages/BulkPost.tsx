@@ -21,6 +21,7 @@ interface CSVRow {
   confidence: number;
   username?: string;
   bet_type?: string; // 'simple' or 'combine'
+  match_time?: string;
 }
 
 const BulkPost = () => {
@@ -38,14 +39,14 @@ const BulkPost = () => {
     let filename = "";
     
     if (templateType === 'simple') {
-      csvContent = "content,sport,match_teams,prediction_text,analysis,odds,confidence,username,bet_type\n" +
-        "Analyse du match PSG vs Real,Football,PSG vs Real Madrid,PSG gagnant,Le PSG joue à domicile et a une meilleure forme récente,1.85,85,winwin,simple\n" +
-        "Pronostic tennis,Tennis,Nadal vs Djokovic,Nadal gagnant,Nadal excelle sur terre battue,2.10,75,starpro,simple";
+      csvContent = "content,sport,match_teams,prediction_text,analysis,odds,confidence,username,bet_type,match_time\n" +
+        "Analyse du match PSG vs Real,Football,PSG vs Real Madrid,PSG gagnant,Le PSG joue à domicile et a une meilleure forme récente,1.85,85,winwin,simple,2024-12-15 21:00:00\n" +
+        "Pronostic tennis,Tennis,Nadal vs Djokovic,Nadal gagnant,Nadal excelle sur terre battue,2.10,75,starpro,simple,2024-12-16 15:30:00";
       filename = 'template_posts_simple.csv';
     } else {
-      csvContent = "content,sport,match_teams,prediction_text,analysis,odds,confidence,username,bet_type\n" +
-        "Combiné 3 matchs Football,Football,PSG vs Real Madrid | Barcelona vs Bayern | Liverpool vs City,PSG gagnant | Barcelona gagnant | Liverpool gagnant,Excellent combiné avec 3 équipes favorites à domicile,8.50,90,winwin,combine\n" +
-        "Combiné Tennis + Football,Multi-Sport,Djokovic vs Nadal | Chelsea vs Arsenal,Djokovic gagnant | Chelsea gagnant,Deux favoris logiques pour ce combiné,4.20,80,starpro,combine";
+      csvContent = "content,sport,match_teams,prediction_text,analysis,odds,confidence,username,bet_type,match_time\n" +
+        "Combiné 3 matchs Football,Football,PSG vs Real Madrid | Barcelona vs Bayern | Liverpool vs City,PSG gagnant | Barcelona gagnant | Liverpool gagnant,Excellent combiné avec 3 équipes favorites à domicile,8.50,90,winwin,combine,2024-12-15 20:00:00\n" +
+        "Combiné Tennis + Football,Multi-Sport,Djokovic vs Nadal | Chelsea vs Arsenal,Djokovic gagnant | Chelsea gagnant,Deux favoris logiques pour ce combiné,4.20,80,starpro,combine,2024-12-16 14:00:00";
       filename = 'template_posts_combine.csv';
     }
     
@@ -147,7 +148,8 @@ const BulkPost = () => {
           odds: row.odds,
           confidence: row.confidence,
           username: row.username || 'Smart', // Par défaut Smart si pas de username spécifié
-          bet_type: row.bet_type || 'simple'
+          bet_type: row.bet_type || 'simple',
+          match_time: row.match_time
         });
         successCount++;
       } catch (error) {
@@ -302,6 +304,7 @@ const BulkPost = () => {
                           <p className="font-medium truncate">{row.content}</p>
                           <p className="text-sm text-muted-foreground">
                             {row.sport} • {row.match_teams} • Cote: {row.odds} • Confiance: {row.confidence}% • Type: {row.bet_type === 'combine' ? 'Combiné' : 'Simple'} • Utilisateur: {row.username || 'Smart'}
+                            {row.match_time && ` • Match: ${new Date(row.match_time).toLocaleString('fr-FR')}`}
                           </p>
                         </div>
                       ))}
